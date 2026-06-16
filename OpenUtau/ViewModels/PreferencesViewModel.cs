@@ -177,7 +177,6 @@ namespace OpenUtau.App.ViewModels {
             DiffSingerLangCodeHide = Preferences.Default.DiffSingerLangCodeHide;
             SkipRenderingMutedTracks = Preferences.Default.SkipRenderingMutedTracks;
             ThemeName = Preferences.Default.ThemeName;
-            PenPlusDefault = Preferences.Default.PenPlusDefault;
             DegreeStyle = Preferences.Default.DegreeStyle;
             UseTrackColor = Preferences.Default.UseTrackColor;
             ShowPortrait = Preferences.Default.ShowPortrait;
@@ -257,12 +256,6 @@ namespace OpenUtau.App.ViewModels {
                 .Skip(1)
                 .Subscribe(preRender => {
                     Preferences.Default.PreRender = preRender;
-                    Preferences.Save();
-                });
-            this.WhenAnyValue(vm => vm.PenPlusDefault)
-                .Skip(1)
-                .Subscribe(penPlusDefault => {
-                    Preferences.Default.PenPlusDefault = penPlusDefault;
                     Preferences.Save();
                 });
             this.WhenAnyValue(vm => vm.Language)

@@ -379,7 +379,7 @@ namespace OpenUtau.App.Views {
                 return;
             }
             // Resize neighbor note
-            if (resizeNeighbor && neighborNote != null) {
+            if (resizeNeighbor && neighborNote != null && !shiftHeld) {
                 int cutDuration = deltaDuration;
                 if (!this.resizeNeighbor && deltaDuration < 0) {
                     cutDuration = Math.Max(deltaDuration, neighborNote.duration - neighborNoteLength);

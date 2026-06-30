@@ -27,33 +27,15 @@ namespace OpenUtau.App.ViewModels {
 
     public class PreferencesViewModel : ViewModelBase {
         // General
-        private CultureInfo? language;
-        private CultureInfo? sortingOrder;
-
         public List<CultureInfo>? Languages { get; }
-        public CultureInfo? Language {
-            get => language;
-            set => this.RaiseAndSetIfChanged(ref language, value);
-        }
+        [Reactive] public CultureInfo? Language { get; set; }
         public List<CultureInfo>? SortingOrders { get; }
-        public CultureInfo? SortingOrder {
-            get => sortingOrder;
-            set => this.RaiseAndSetIfChanged(ref sortingOrder, value);
-        }
+        [Reactive] public CultureInfo? SortingOrder { get; set; }
         [Reactive] public bool Beta { get; set; }
 
         // Playback
-        private List<AudioOutputDevice>? audioOutputDevices;
-        private AudioOutputDevice? audioOutputDevice;
-
-        public List<AudioOutputDevice>? AudioOutputDevices {
-            get => audioOutputDevices;
-            set => this.RaiseAndSetIfChanged(ref audioOutputDevices, value);
-        }
-        public AudioOutputDevice? AudioOutputDevice {
-            get => audioOutputDevice;
-            set => this.RaiseAndSetIfChanged(ref audioOutputDevice, value);
-        }
+        [Reactive] public List<AudioOutputDevice>? AudioOutputDevices { get; set; }
+        [Reactive] public AudioOutputDevice? AudioOutputDevice { get; set; }
         [Reactive] public bool UseSystemDefaultDevice { get; set; }
         [Reactive] public int PreferPortAudio { get; set; }
         [Reactive] public int LockStartTime { get; set; }
@@ -78,20 +60,16 @@ namespace OpenUtau.App.ViewModels {
         // Render
         [Reactive] public bool PreRender { get; set; }
         [Reactive] public int NumRenderThreads { get; set; }
-        public int LogicalCoreCount {
-            get => Environment.ProcessorCount;
-        }
-        [Reactive] public bool HighThreads { get; set; }
-        public int SafeMaxThreadCount {
-            get => Math.Min(8, LogicalCoreCount / 2);
-        }
+        public int LogicalCoreCount => Environment.ProcessorCount;
+        public int SafeMaxThreadCount => Math.Min(8, LogicalCoreCount / 2);
+        public bool HighThreads => NumRenderThreads > SafeMaxThreadCount;
         [Reactive] public bool SkipRenderingMutedTracks { get; set; }
         [Reactive] public bool ClearCacheOnQuit { get; set; }
         public List<string> OnnxRunnerOptions { get; set; }
         [Reactive] public string OnnxRunner { get; set; }
         public List<GpuInfo> OnnxGpuOptions { get; set; }
         [Reactive] public GpuInfo OnnxGpu { get; set; }
-        [Reactive] public bool ShowOnnxGpu { get; set; }
+        public bool ShowOnnxGpu => OnnxRunner == "DirectML";
 
         // Appearance
         [Reactive] public string ThemeName { get; set; }
@@ -100,7 +78,7 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public bool ShowPortrait { get; set; }
         [Reactive] public bool ShowIcon { get; set; }
         [Reactive] public bool ShowGhostNotes { get; set; }
-        [Reactive] public bool ThemeEditable { get; set; }
+        public bool ThemeEditable => ThemeName != "Light" && ThemeName != "Dark";
         public List<string> ThemeItems => ThemeManager.GetAvailableThemes();
         public bool IsThemeEditorOpen => Views.ThemeEditorWindow.IsOpen;
 
@@ -168,7 +146,6 @@ namespace OpenUtau.App.ViewModels {
                OnnxRunnerOptions[0] : Preferences.Default.OnnxRunner;
             OnnxGpuOptions = Onnx.getGpuInfo();
             OnnxGpu = OnnxGpuOptions.FirstOrDefault(x => x.deviceId == Preferences.Default.OnnxGpu, OnnxGpuOptions[0]);
-            ShowOnnxGpu = OnnxRunner == "DirectML";
             DiffSingerDepth = Preferences.Default.DiffSingerDepth * 100;
             DiffSingerSteps = Preferences.Default.DiffSingerSteps;
             DiffSingerStepsVariance = Preferences.Default.DiffSingerStepsVariance;
@@ -193,7 +170,7 @@ namespace OpenUtau.App.ViewModels {
 
             MessageBus.Current.Listen<ThemeEditorStateChangedEvent>()
                 .Subscribe(_ => this.RaisePropertyChanged(nameof(IsThemeEditorOpen)));
-            
+
             this.WhenAnyValue(vm => vm.UseSystemDefaultDevice)
                 .Skip(1)
                 .Subscribe(useDefault => {
@@ -274,7 +251,7 @@ namespace OpenUtau.App.ViewModels {
             this.WhenAnyValue(vm => vm.ThemeName)
                 .Skip(1)
                 .Subscribe(themeName => {
-                    ThemeEditable = themeName != "Light" && themeName != "Dark";
+                    this.RaisePropertyChanged(nameof(ThemeEditable));
                     if (!IsThemeEditorOpen) {
                         Preferences.Default.ThemeName = themeName;
                         Preferences.Save();
@@ -344,8 +321,8 @@ namespace OpenUtau.App.ViewModels {
             this.WhenAnyValue(vm => vm.NumRenderThreads)
                 .Skip(1)
                 .Subscribe(index => {
+                    this.RaisePropertyChanged(nameof(HighThreads));
                     Preferences.Default.NumRenderThreads = index;
-                    HighThreads = index > SafeMaxThreadCount ? true : false;
                     Preferences.Save();
                 });
             this.WhenAnyValue(vm => vm.DefaultRenderer)
@@ -357,9 +334,9 @@ namespace OpenUtau.App.ViewModels {
             this.WhenAnyValue(vm => vm.OnnxRunner)
                 .Skip(1)
                 .Subscribe(index => {
+                    this.RaisePropertyChanged(nameof(ShowOnnxGpu));
                     Preferences.Default.OnnxRunner = index;
                     Preferences.Save();
-                    ToggleOnnxGpuDisplay(index == "DirectML");
                 });
             this.WhenAnyValue(vm => vm.OnnxGpu)
                 .Skip(1)
@@ -481,10 +458,6 @@ namespace OpenUtau.App.ViewModels {
 
         public void RefreshThemes() {
             this.RaisePropertyChanged(nameof(ThemeItems));
-        }
-
-        public void ToggleOnnxGpuDisplay(bool show) {
-            ShowOnnxGpu = show;
         }
     }
 }

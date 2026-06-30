@@ -78,7 +78,8 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public bool ShowPortrait { get; set; }
         [Reactive] public bool ShowIcon { get; set; }
         [Reactive] public bool ShowGhostNotes { get; set; }
-        public bool ThemeEditable => ThemeName != "Light" && ThemeName != "Dark";
+        public bool ThemeEditable => ThemeName is not ("Light" or "Dark")
+            && !Colors.CustomTheme.IsPackageTheme(ThemeName);
         public List<string> ThemeItems => ThemeManager.GetAvailableThemes();
         public bool IsThemeEditorOpen => Views.ThemeEditorWindow.IsOpen;
 
@@ -457,6 +458,8 @@ namespace OpenUtau.App.ViewModels {
         }
 
         public void RefreshThemes() {
+            Colors.CustomTheme.ListThemes();
+            _ = OudepLoaderRegistry.LoadAllAsync();
             this.RaisePropertyChanged(nameof(ThemeItems));
         }
     }

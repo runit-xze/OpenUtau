@@ -8,6 +8,7 @@ namespace OpenUtau.Classic.Flags {
             var keyBuilder = new StringBuilder();
             var valueBuilder = new StringBuilder();
             bool wasDigit = false;
+            bool inSelector = false;
             for (int i = 0; i <= text.Length; ++i) {
                 if (i == text.Length || (char.IsLetter(text[i]) || text[i] == '/') && wasDigit) {
                     string key = keyBuilder.ToString();
@@ -24,10 +25,19 @@ namespace OpenUtau.Classic.Flags {
                     break;
                 }
                 char c = text[i];
+                if (c == '/') {
+                    // Note selector prefix (e.g. "/1"), not a flag. Skip it entirely.
+                    inSelector = true;
+                    wasDigit = false;
+                    continue;
+                }
                 if (c == '-' || c == '+' || char.IsDigit(c)) {
-                    valueBuilder.Append(c);
-                    wasDigit = true;
-                } else if (char.IsLetter(c) || c == '/') {
+                    if (!inSelector) {
+                        valueBuilder.Append(c);
+                        wasDigit = true;
+                    }
+                } else if (char.IsLetter(c)) {
+                    inSelector = false;
                     if (keyBuilder.Length == 0 && IsSingleCharacterFlag(c)) {
                         flags.Add(new UstFlag(c.ToString(), 0));
                         continue;

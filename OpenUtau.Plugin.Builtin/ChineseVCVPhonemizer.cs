@@ -177,7 +177,7 @@ namespace OpenUtau.Plugin.Builtin {
 
             var attr = note.phonemeAttributes?.FirstOrDefault(a => a.index == 0) ?? default;
             string color = attr.voiceColor ?? string.Empty;
-            int toneShift = attr.toneShift;
+            int toneShift = attr.toneShift ?? GetParentToneShift();
             int? alt = attr.alternate;
 
             var results = new List<UOto>();

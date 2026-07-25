@@ -25,18 +25,36 @@ namespace OpenUtau.Core {
 
     public class Onnx {
 
-        private static bool cudaAvailable = OS.IsLinux() && CudaGpuDetector.IsCudaAvailable() && CudaGpuDetector.IsCuDnnAvailable();
+        private static bool cudaAvailable = DetectCuda();
 
         private static readonly Dictionary<int, OrtEpDevice> devices = initializeDevices();
 
-        private static Dictionary<int, OrtEpDevice> initializeDevices() {
-            var env = OrtEnv.Instance();
-            var ortDevices = env.GetEpDevices();
+        private static bool DetectCuda() {
+            try {
+                return OS.IsLinux() && CudaGpuDetector.IsCudaAvailable() && CudaGpuDetector.IsCuDnnAvailable();
+            } catch (Exception e) {
+                Log.Warning(e, "CUDA detection failed. Falling back to CPU.");
+                return false;
+            }
+        }
 
-            return ortDevices
-                .Where(device => device.EpName.ToLower().Contains("dml"))
-                .Select((device, index) => new { index, device })
-                .ToDictionary(x => x.index, x => x.device);
+        // Native onnxruntime may be unavailable (missing VC++ redist on Windows, missing
+        // native deps elsewhere). This runs in a static initializer, so an escaping
+        // exception would poison the whole Onnx class with TypeInitializationException
+        // and take down every caller, not just GPU enumeration.
+        private static Dictionary<int, OrtEpDevice> initializeDevices() {
+            try {
+                var env = OrtEnv.Instance();
+                var ortDevices = env.GetEpDevices();
+
+                return ortDevices
+                    .Where(device => device.EpName.ToLower().Contains("dml"))
+                    .Select((device, index) => new { index, device })
+                    .ToDictionary(x => x.index, x => x.device);
+            } catch (Exception e) {
+                Log.Warning(e, "Failed to enumerate ONNX execution devices. GPU acceleration will be unavailable.");
+                return new Dictionary<int, OrtEpDevice>();
+            }
         }
 
         public static List<string> getRunnerOptions() {
@@ -67,37 +85,43 @@ namespace OpenUtau.Core {
         }
 
         public static List<GpuInfo> getGpuInfo() {
-            if (cudaAvailable) {
-                return CudaGpuDetector.GetCudaDevices();
-            }         
-     
-            if (OS.IsAndroid()) {
-                return new List<GpuInfo>{new GpuInfo {
-                    deviceId = 0, // eliminate exception of taking OnnxGpuOptions[0]
-                }};
-            }
-
             List<GpuInfo> gpuList = new List<GpuInfo>();
-            var env = OrtEnv.Instance();
-            var ortDevices = env.GetEpDevices();
+            try {
+                if (cudaAvailable) {
+                    return CudaGpuDetector.GetCudaDevices();
+                }
 
-            var i = 0;
-            foreach (var device in ortDevices.Where(device => device.EpName.ToLower().Contains("dml"))) {
-                var description = "";
-                foreach (var item in device.HardwareDevice.Metadata.Entries) {
-                    if (item.Key.ToLower() == "description") {
-                        description = $"{item.Value} ({device.HardwareDevice.Type})";
-                        break;
+                if (OS.IsAndroid()) {
+                    return new List<GpuInfo>{new GpuInfo {
+                        deviceId = 0, // eliminate exception of taking OnnxGpuOptions[0]
+                    }};
+                }
+
+                var env = OrtEnv.Instance();
+                var ortDevices = env.GetEpDevices();
+
+                var i = 0;
+                foreach (var device in ortDevices.Where(device => device.EpName.ToLower().Contains("dml"))) {
+                    var description = "";
+                    foreach (var item in device.HardwareDevice.Metadata.Entries) {
+                        if (item.Key.ToLower() == "description") {
+                            description = $"{item.Value} ({device.HardwareDevice.Type})";
+                            break;
+                        }
                     }
+                    if (string.IsNullOrEmpty(description)) { // fallback
+                        description = $"{device.EpName} {device.HardwareDevice.Vendor} ({device.HardwareDevice.Type})";
+                    }
+                    devices[i] = device;
+                    gpuList.Add(new GpuInfo {
+                        deviceId = i++,
+                        description = description
+                    });
                 }
-                if (string.IsNullOrEmpty(description)) { // fallback
-                    description = $"{device.EpName} {device.HardwareDevice.Vendor} ({device.HardwareDevice.Type})";
-                }
-                devices[i] = device;
-                gpuList.Add(new GpuInfo {
-                    deviceId = i++,
-                    description = description
-                });
+            } catch (Exception e) {
+                // GPU enumeration is optional metadata for a preferences dropdown. Never let
+                // a native-library failure here prevent Preferences from opening.
+                Log.Warning(e, "Failed to query GPU info. GPU acceleration will be unavailable.");
             }
             return gpuList;
         }
@@ -114,12 +138,15 @@ namespace OpenUtau.Core {
             }
             switch (runner) {
                 case "DirectML":
-                    var d = devices[Preferences.Default.OnnxGpu];
-                    options.AppendExecutionProvider(
-                        OrtEnv.Instance(),
-                        new List<OrtEpDevice> { d },
-                        new Dictionary<string, string> { }
-                     );
+                    if (devices.TryGetValue(Preferences.Default.OnnxGpu, out var d)) {
+                        options.AppendExecutionProvider(
+                            OrtEnv.Instance(),
+                            new List<OrtEpDevice> { d },
+                            new Dictionary<string, string> { }
+                         );
+                    } else {
+                        Log.Warning($"DirectML device {Preferences.Default.OnnxGpu} unavailable. Falling back to CPU.");
+                    }
                     break;
                 case "CoreML":
                     // Note: MLProgram format has stricter validation and may fail with complex DiffSinger models

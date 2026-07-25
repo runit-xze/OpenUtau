@@ -78,6 +78,7 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public bool ShowPortrait { get; set; }
         [Reactive] public bool ShowIcon { get; set; }
         [Reactive] public bool ShowGhostNotes { get; set; }
+        [Reactive] public bool DetachPianoRoll { get; set; }
         public bool ThemeEditable => ThemeName is not ("Light" or "Dark")
             && !Colors.CustomTheme.IsPackageTheme(ThemeName);
         public List<string> ThemeItems => ThemeManager.GetAvailableThemes();
@@ -162,6 +163,7 @@ namespace OpenUtau.App.ViewModels {
             ShowPortrait = Preferences.Default.ShowPortrait;
             ShowIcon = Preferences.Default.ShowIcon;
             ShowGhostNotes = Preferences.Default.ShowGhostNotes;
+            DetachPianoRoll = Preferences.Default.DetachPianoRoll;
             Beta = Preferences.Default.Beta;
             LyricsHelper = LyricsHelpers.FirstOrDefault(option => option.klass.Equals(ActiveLyricsHelper.Inst.GetPreferred()));
             LyricsHelperBrackets = Preferences.Default.LyricsHelperBrackets;
@@ -295,6 +297,12 @@ namespace OpenUtau.App.ViewModels {
                     Preferences.Default.ShowGhostNotes = showGhostNotes;
                     Preferences.Save();
                     MessageBus.Current.SendMessage(new PianorollRefreshEvent("Part"));
+                });
+            this.WhenAnyValue(vm => vm.DetachPianoRoll)
+                .Subscribe(detachPianoRoll => {
+                    Preferences.Default.DetachPianoRoll = detachPianoRoll;
+                    Preferences.Save();
+                    MessageBus.Current.SendMessage(new PianorollRefreshEvent("Attachment"));
                 });
             this.WhenAnyValue(vm => vm.Beta)
                 .Skip(1)

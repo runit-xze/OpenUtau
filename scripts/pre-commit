@@ -1,0 +1,20 @@
+#!/bin/sh
+# Pre-commit hook: enforce tabs, K&R braces, LF line endings.
+# Installed by: make install-hooks
+
+set -e
+
+echo "Checking code style…"
+
+# Check for CRLF before dotnet format (git may not convert yet)
+if git diff --cached --name-only --diff-filter=ACM | grep -E '\.(cs|csproj|axaml|xaml)$' | xargs grep -l $'\r$' 2>/dev/null; then
+	echo "ERROR: CRLF line endings found in staged files. Run 'dotnet format' and re-stage." >&2
+	exit 1
+fi
+
+dotnet format --verify-no-changes --verbosity quiet 2>/dev/null || {
+	echo "ERROR: Code style violations detected. Run 'dotnet format' and re-stage." >&2
+	exit 1
+}
+
+echo "Style OK."

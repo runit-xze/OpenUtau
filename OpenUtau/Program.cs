@@ -22,7 +22,24 @@ namespace OpenUtau.App {
 		[STAThread]
 		public static void Main(string[] args) {
 			Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+			if (args.Length > 0) {
+				string arg = args[0].ToLowerInvariant();
+				if (arg == "--help" || arg == "-h") {
+					Console.Error.WriteLine("OpenUtau — UTAU community editor");
+					Console.Error.WriteLine();
+					Console.Error.WriteLine("Usage: OpenUtau [--help | --version]");
+					Console.Error.WriteLine();
+					Console.Error.WriteLine("Launches the GUI editor. No CLI rendering mode yet.");
+					return;
+				}
+				if (arg == "--version" || arg == "-v") {
+					var ver = Assembly.GetEntryAssembly()?.GetName().Version;
+					Console.Error.WriteLine(ver?.ToString() ?? "unknown");
+					return;
+				}
+			}
 			InitLogging();
+			RegisterSignalHandlers();
 			string processName = Process.GetCurrentProcess().ProcessName;
 			if (processName != "dotnet") {
 				var exists = Process.GetProcessesByName(processName).Count() > 1;
@@ -55,6 +72,21 @@ namespace OpenUtau.App {
 				}
 			}
 			Log.Information($"Exited.");
+		}
+
+		static void RegisterSignalHandlers() {
+			if (OperatingSystem.IsLinux()) {
+				PosixSignalRegistration.Create(PosixSignal.SIGTERM, ctx => {
+					Log.Information("Received SIGTERM; shutting down.");
+					ctx.Cancel = true;
+					Environment.Exit(0);
+				});
+				PosixSignalRegistration.Create(PosixSignal.SIGINT, ctx => {
+					Log.Information("Received SIGINT; shutting down.");
+					ctx.Cancel = true;
+					Environment.Exit(0);
+				});
+			}
 		}
 
 		// Avalonia configuration, don't remove; also used by visual designer.
@@ -91,7 +123,7 @@ namespace OpenUtau.App {
 					args, ShutdownMode.OnMainWindowClose);
 
 		public static void InitLogging() {
-			Log.Logger = new LoggerConfiguration()
+			var logConfig = new LoggerConfiguration()
 				.MinimumLevel.Verbose()
 				.WriteTo.Debug()
 				.WriteTo.Logger(lc => lc
@@ -99,8 +131,15 @@ namespace OpenUtau.App {
 					.WriteTo.File(PathManager.Inst.LogFilePath, rollingInterval: RollingInterval.Day, encoding: Encoding.UTF8))
 				.WriteTo.Logger(lc => lc
 					.MinimumLevel.ControlledBy(DebugViewModel.Sink.Inst.LevelSwitch)
-					.WriteTo.Sink(DebugViewModel.Sink.Inst))
-				.CreateLogger();
+					.WriteTo.Sink(DebugViewModel.Sink.Inst));
+			if (OperatingSystem.IsLinux()) {
+				// stderr is captured by journald under systemd, and shows in
+				// the terminal when launched from one. Structured output goes
+				// to stderr so journald indexes the fields.
+				logConfig.WriteTo.Console(
+					standardErrorFromLevel: Serilog.Events.LogEventLevel.Verbose);
+			}
+			Log.Logger = logConfig.CreateLogger();
 			AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler((sender, args) => {
 				Log.Error((Exception)args.ExceptionObject, "Unhandled exception");
 			});

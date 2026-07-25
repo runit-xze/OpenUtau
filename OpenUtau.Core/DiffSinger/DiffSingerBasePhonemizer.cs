@@ -203,8 +203,21 @@ namespace OpenUtau.Core.DiffSinger
         }
 
         string[] GetRejectedSymbols(string phoneticHint) {
+            var repDict = new Dictionary<string, string>();
+            string dictionaryPath = Path.Combine(rootPath, GetDictionaryName());
+            try {
+                var repObj = Core.Yaml.DefaultDeserializer.Deserialize<PartialDict>(File.ReadAllText(dictionaryPath)).replacements;
+                if (repObj != null) {
+                    foreach (Replacement r in repObj) {
+                        repDict.Add(r.from, r.to);
+                    }
+                }
+            } catch {
+                Log.Error($"Could not find dictionary at {dictionaryPath}.");
+            }
+
             return phoneticHint.Split()
-                .Where(s => String.IsNullOrEmpty(ValidatePhoneme(s)))
+                .Where(s => String.IsNullOrEmpty(ValidatePhoneme(s, repDict)))
                 .ToArray();
         }
 

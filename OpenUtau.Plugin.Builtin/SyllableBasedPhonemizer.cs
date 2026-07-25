@@ -484,9 +484,19 @@ namespace OpenUtau.Plugin.Builtin {
                     return getSymbolsRaw(note.phoneticHint);
                 }
 
+                // Snapshot the dictionary once. SetSinger nulls it out and reloads on a
+                // background task, so re-reading the property per lookup can observe null
+                // partway through a phonemize pass (e.g. the singer is changed while notes
+                // are being phonemized) and throw. Null here means "not usable yet",
+                // which callers already handle as an unphonemizable note.
+                var g2p = dictionary;
+                if (g2p == null || note.lyric == null) {
+                    return null;
+                }
+
                 var result = new List<string>();
                 foreach (var subword in note.lyric.Trim().ToLowerInvariant().Split(wordSeparators, StringSplitOptions.RemoveEmptyEntries)) {
-                    var subResult = dictionary.Query(subword);
+                    var subResult = g2p.Query(subword);
                     if (subResult == null) {
                         Log.Warning($"Subword '{subword}' from word '{note.lyric}' can't be found in the dictionary");
                         subResult = HandleWordNotFound(note);

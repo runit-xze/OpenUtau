@@ -23,7 +23,7 @@ namespace OpenUtau.Classic {
             this.phaseComp = phaseComp;
         }
 
-        class Segment {
+        internal class Segment {
             public float[] samples;
             public double posMs;
             public int posSamples;
@@ -107,11 +107,30 @@ namespace OpenUtau.Classic {
                 }
             }
 
+            return MixSegments(segments);
+        }
+
+        /// <summary>
+        /// Sums each segment into one buffer at its corrected position.
+        /// </summary>
+        internal static float[] MixSegments(IReadOnlyList<Segment> segments) {
             var phraseSamples = new float[0];
             foreach (var segment in segments) {
-                Array.Resize(ref phraseSamples, segment.posSamples + segment.correction + segment.samples.Length - segment.skipSamples);
-                for (int i = Math.Max(0, -segment.skipSamples); i < segment.samples.Length - segment.skipSamples; i++) {
-                    phraseSamples[segment.posSamples + segment.correction + i] += segment.samples[segment.skipSamples + i];
+                // Phase correction can be negative, so this offset can push a segment
+                // before the start of the buffer.
+                int offset = segment.posSamples + segment.correction;
+                int required = offset + segment.samples.Length - segment.skipSamples;
+                // Only ever grow: a segment that ends earlier than a previous one must not
+                // shrink the buffer out from under the samples already written into it.
+                if (required > phraseSamples.Length) {
+                    Array.Resize(ref phraseSamples, required);
+                }
+                // Keep both the read index (skipSamples + i) and the write index
+                // (offset + i) inside their arrays.
+                int start = Math.Max(Math.Max(0, -segment.skipSamples), -offset);
+                int end = segment.samples.Length - segment.skipSamples;
+                for (int i = start; i < end; i++) {
+                    phraseSamples[offset + i] += segment.samples[segment.skipSamples + i];
                 }
             }
             return phraseSamples;

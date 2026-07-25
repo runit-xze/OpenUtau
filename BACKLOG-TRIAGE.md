@@ -4,7 +4,7 @@ Snapshot of every open issue and PR on `openutau/OpenUtau` at the time of triage
 with what this fork has done about it. Fork-only: nothing here was pushed or
 commented upstream.
 
-- Open PRs surveyed: **110** — **50 merged** into this fork (Tier 1 + Tier 2 + hotfixes)
+- Open PRs surveyed: **110** — **52 merged** into this fork (Tier 1 + Tier 2 + hotfixes + manual merges)
 - Open issues surveyed: **63**
 
 ## Issue status
@@ -44,6 +44,20 @@ static-initializer poisoning fixed in PR #58. Unconfirmed without reporter logs.
 | [1535](https://github.com/openutau/OpenUtau/pull/1535) | Load all depth folders for resamplers, wavtools, phonemizers, plugins | Conflicted with #2270's SearchPluginInternal; honored intent by checking LoadDeepFolderSinger in the recursive helper |
 | [2031](https://github.com/openutau/OpenUtau/pull/2031) | Flag Text Input | Fixed resampler name lookup (was passing renderer name to GetResampler, silent fallback to Worldline) and .ForEach build break |
 | [2059](https://github.com/openutau/OpenUtau/pull/2059) | Spanish+ phonemizer | One new file, SpanishG2p dependency already present; purely additive |
+| [2150](https://github.com/openutau/OpenUtau/pull/2150) | Thai phonemizer fix | Renamed class, added 'อ' char mappings; applied cleanly, 227 tests passed |
+| [2248](https://github.com/openutau/OpenUtau/pull/2248) | Support alt/toneshift in BaseKoreanPhonemizer | Already present via #2236 with parent fallbacks (better) |
+| [2276](https://github.com/openutau/OpenUtau/pull/2276) | Turkish (tr-TR) translation | New Strings.tr-TR.axaml + registration in App.axaml; purely additive |
+
+### Repository-wide style reformat (this fork, 2026-07-25)
+
+All 434 source files converted:
+- **`indent_style = tab`** (was `space`) — Linux editors show tabs at correct width
+- **`charset = utf-8`** (was `utf-8-bom`) — no BOM bytes annoying Linux tools
+- **LF line endings** enforced via `.gitattributes` — no more CRLF noise in diffs
+- **K&R brace style** already configured (`csharp_new_line_before_open_brace = none`)
+
+This breaks Windows/.NET tooling expectations (Allman braces, spaces, BOM). Linux coders get
+native tooling behavior. If upstream ever merges our changes, they'll need to handle the reformat.
 
 ### AppImage release (this fork, 2026-07-25)
 

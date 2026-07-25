@@ -1,38 +1,36 @@
 
-# OpenUtau
+# runit-xze/OpenUtau
 
-OpenUtau is a free, open-source editor made for the UTAU community.
+This is a **community-maintained fork** of [stakira/OpenUtau](https://github.com/stakira/OpenUtau) with bug fixes and selected upstream PRs merged ahead of the upstream release cycle.
 
-[![Build](https://img.shields.io/github/actions/workflow/status/stakira/OpenUtau/build.yml?style=for-the-badge)](https://github.com/stakira/OpenUtau/actions/workflows/build.yml)
-[![Discord](https://img.shields.io/discord/551606189386104834?style=for-the-badge&label=discord&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/UfpMnqMmEM)
-[![QQ Qroup](https://img.shields.io/badge/QQ-485658015-blue?style=for-the-badge)](https://qm.qq.com/cgi-bin/qm/qr?k=8EtEpehB1a-nfTNAnngTVqX3o9xoIxmT&jump_from=webapi)
-[![Trello](https://img.shields.io/badge/trello-go-blue?style=for-the-badge&logo=trello)](https://trello.com/b/93ANoCIV/openutau)
+[![Build](https://img.shields.io/github/actions/workflow/status/runit-xze/OpenUtau/build.yml?style=for-the-badge)](https://github.com/runit-xze/OpenUtau/actions/workflows/build.yml)
 
-## Getting started
+## Downloads
 
-[![Download](https://img.shields.io/static/v1?style=for-the-badge&logo=github&label=download&message=windows-x64&labelColor=FF347C&color=4ea6ea)](https://github.com/stakira/OpenUtau/releases/latest/download/OpenUtau-win-x64.zip)</br>
-[![Download](https://img.shields.io/static/v1?style=for-the-badge&logo=github&label=download&message=windows-x86&labelColor=FF347C&color=4ea6ea)](https://github.com/stakira/OpenUtau/releases/latest/download/OpenUtau-win-x86.zip)</br>
-[![Download](https://img.shields.io/static/v1?style=for-the-badge&logo=github&label=download&message=macos-x64&labelColor=FF347C&color=4ea6ea)](https://github.com/stakira/OpenUtau/releases/latest/download/OpenUtau-osx-x64.dmg)</br>
-[![Download](https://img.shields.io/static/v1?style=for-the-badge&logo=github&label=download&message=linux-x64&labelColor=FF347C&color=4ea6ea)](https://github.com/stakira/OpenUtau/releases/latest/download/OpenUtau-linux-x64.zip)
+| Platform | Link |
+|---|---|
+| **Linux x86_64** | [OpenUtau-linux-x86_64.AppImage](https://github.com/runit-xze/OpenUtau/releases/latest/download/OpenUtau-linux-x86_64.AppImage) |
+| **Linux aarch64** | [OpenUtau-linux-aarch64.AppImage](https://github.com/runit-xze/OpenUtau/releases/latest/download/OpenUtau-linux-aarch64.AppImage) |
+| Windows / macOS | See [upstream releases](https://github.com/stakira/OpenUtau/releases) |
 
-It is **strongly recommended** that you read these Github wiki pages before using the software.
-- [Getting-Started](https://github.com/stakira/OpenUtau/wiki/Getting-Started)
-- [Resamplers](https://github.com/stakira/OpenUtau/wiki/Resamplers-and-Wavtools)
-- [Phonemizers](https://github.com/stakira/OpenUtau/wiki/Phonemizers)
-- [FAQ](https://github.com/stakira/OpenUtau/wiki/FAQ)
+The updater is **disabled in this fork** since the appcast points at upstream releases. Download new builds from this page.
 
-- [中文使用说明](https://opensynth.miraheze.org/wiki/OpenUTAU/%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95)
+## What's fixed here
 
-## How to contribute
+See [BACKLOG-TRIAGE.md](BACKLOG-TRIAGE.md) for the full list of merged fixes and triaged upstream issues. Key fixes so far:
 
-Tried OpenUtau and not satisfied? Don't just walk away! You can help:
-- Report issues on our [Discord server](https://discord.gg/UfpMnqMmEM) or Github.
-- Suggest features on Discord or Github.
-- Add or update translations for your language on [Crowdin](https://crowdin.com/project/oxygen-dioxideopenutau).
+- **ONNX static-init poisoning crash** (Preferences, new project, phonemizer select) — PR #58
+- **SharpWavtool negative offset** caused audio to stop immediately — PR #59
+- **Autosave crash** on unsaved project — PR #60
+- **moresampler LLSM directory race** — PR #61
+- **Arm64 build support** — onnxruntime package selection fixed for `linux-arm64`
+- **Flag text input** from upstream PR #2031 — plus fixes for resampler lookup and build break
+- **Load-all-depth-folders** from upstream PR #1535 — respecting the existing preference
+- **Spanish+ phonemizer** from upstream PR #2059
 
-Know how to code? Got an idea for an improvement? Don't keep it to yourself!
-- Contribute fixes via pull requests.
-- Check out the development roadmap on [Trello](https://trello.com/b/93ANoCIV/openutau) and discuss it on Discord.
+## Documentation
+
+For general usage, wiki, and community links, see the [upstream README](https://github.com/stakira/OpenUtau).
 
 ## Plugin development
 

@@ -4,7 +4,7 @@ Snapshot of every open issue and PR on `openutau/OpenUtau` at the time of triage
 with what this fork has done about it. Fork-only: nothing here was pushed or
 commented upstream.
 
-- Open PRs surveyed: **110** — 47 merged into this fork (Tier 1 + Tier 2)
+- Open PRs surveyed: **110** — **50 merged** into this fork (Tier 1 + Tier 2 + hotfixes)
 - Open issues surveyed: **63**
 
 ## Issue status
@@ -36,6 +36,34 @@ static-initializer poisoning fixed in PR #58. Unconfirmed without reporter logs.
 | [2156](https://github.com/openutau/OpenUtau/issues/2156) | OpenUtau keeps crashing | crash class matches PR #58 Onnx poisoning; needs reporter log to confirm |
 | [2158](https://github.com/openutau/OpenUtau/issues/2158) | openutau crashes when i select a phonemizer | crash class matches PR #58 Onnx poisoning; needs reporter log to confirm |
 | [2195](https://github.com/openutau/OpenUtau/issues/2195) | openutau wont open after updating to newest version (0.1.568) | crash class matches PR #58 Onnx poisoning; needs reporter log to confirm |
+
+## Merged upstream PRs (recent)
+
+| # | Title | Notes |
+|---|---|---|
+| [1535](https://github.com/openutau/OpenUtau/pull/1535) | Load all depth folders for resamplers, wavtools, phonemizers, plugins | Conflicted with #2270's SearchPluginInternal; honored intent by checking LoadDeepFolderSinger in the recursive helper |
+| [2031](https://github.com/openutau/OpenUtau/pull/2031) | Flag Text Input | Fixed resampler name lookup (was passing renderer name to GetResampler, silent fallback to Worldline) and .ForEach build break |
+| [2059](https://github.com/openutau/OpenUtau/pull/2059) | Spanish+ phonemizer | One new file, SpanishG2p dependency already present; purely additive |
+
+### AppImage release (this fork, 2026-07-25)
+
+First release with working AppImages for both architectures:
+
+- **x86_64** (504 MB) — includes CUDA/TensorRT ONNX GPU providers
+- **aarch64** (114 MB) — CPU-only onnxruntime (GPU package has no arm64 natives)
+
+Arm64 build required a csproj fix: the OnnxRuntime.Gpu condition keyed on host OS only,
+so `dotnet publish -r linux-arm64` tried to copy nonexistent win-arm64 natives.
+Split into RID-conditional groups: arm64 gets the CPU package.
+
+All three upstream PRs (#1535, #2031, #2059) tested via the Xephyr GUI driver —
+Preferences opens, flag box works, no crash on startup.
+
+## Remaining work
+
+- **27 heavyweight PRs** (500L+) — 21 conflicting, 8 drafts — not yet reviewed
+- **Workflow OAuth scope** — gates #1850 (AppImage workflow), #2228 (Nightly Builds), and #2187 (auto-merge)
+- Three PRs blocked on the above scope decision
 
 ### Needs reproduction (27)
 

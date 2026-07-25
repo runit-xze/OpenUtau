@@ -459,7 +459,16 @@ namespace OpenUtau.Core.Ustx {
         }
 
         public override void BeforeSave(UProject project, UTrack track) {
-            relativePath = Path.GetRelativePath(Path.GetDirectoryName(project.FilePath), FilePath);
+            var projectDir = string.IsNullOrEmpty(project.FilePath)
+                ? null
+                : Path.GetDirectoryName(project.FilePath);
+            // A project that has never been saved has no directory to be relative to.
+            // Autosave hits this on every tick for a new project holding an audio part.
+            // Store the absolute path instead: AfterLoad combines it against the project
+            // directory, and Path.Combine returns a rooted second argument unchanged.
+            relativePath = string.IsNullOrEmpty(projectDir)
+                ? FilePath
+                : Path.GetRelativePath(projectDir, FilePath);
         }
 
         public override void AfterLoad(UProject project, UTrack track) {

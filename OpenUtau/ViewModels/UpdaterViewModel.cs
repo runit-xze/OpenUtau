@@ -49,7 +49,17 @@ namespace OpenUtau.App.ViewModels {
             Init();
         }
 
+        // This fork does not publish to the upstream appcast. The updater resolves
+        // releases from stakira/OpenUtau, so leaving it live would offer upstream builds
+        // and overwrite this fork's binary with them. Returning null here disables both
+        // the startup check and the manual one, since both go through this method.
+        // Not a const, so the code below stays reachable for when a fork appcast exists.
+        static readonly bool UpdatesEnabled = false;
+
         public static async Task<SparkleUpdater?> NewUpdaterAsync() {
+            if (!UpdatesEnabled) {
+                return null;
+            }
             try {
                 var release = await SelectRelease();
                 if (release == null) {
@@ -104,6 +114,12 @@ namespace OpenUtau.App.ViewModels {
         }
 
         async void Init() {
+            if (!UpdatesEnabled) {
+                // Say so plainly rather than reusing "Unable to check update", which
+                // reads like a network failure the user should try to fix.
+                UpdaterStatus = ThemeManager.GetString("updater.status.forkdisabled");
+                return;
+            }
             UpdaterStatus = ThemeManager.GetString("updater.status.checking");
             sparkle = await NewUpdaterAsync();
             if (sparkle == null) {
@@ -133,7 +149,7 @@ namespace OpenUtau.App.ViewModels {
 
         public void OnGithub() {
             try {
-                OS.OpenWeb("https://github.com/stakira/OpenUtau/wiki");
+                OS.OpenWeb("https://github.com/runit-xze/OpenUtau");
             } catch (Exception e) {
                 DocManager.Inst.ExecuteCmd(new ErrorMessageNotification(e));
             }

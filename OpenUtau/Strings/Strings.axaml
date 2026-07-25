@@ -847,6 +847,7 @@ General
   <system:String x:Key="updater.github">GitHub</system:String>
   <system:String x:Key="updater.status.available">Update v{0} available!</system:String>
   <system:String x:Key="updater.status.checking">Checking for updates...</system:String>
+  <system:String x:Key="updater.status.forkdisabled">Updates are disabled in this fork.</system:String>
   <system:String x:Key="updater.status.notavailable">Up to date</system:String>
   <system:String x:Key="updater.status.unknown">Unable to check update</system:String>
   <system:String x:Key="updater.update">Update</system:String>

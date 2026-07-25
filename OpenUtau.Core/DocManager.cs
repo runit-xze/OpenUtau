@@ -123,6 +123,9 @@ namespace OpenUtau.Core {
                 return;
             }
             result.AddRange(Directory.EnumerateFiles(path, "*.dll", SearchOption.TopDirectoryOnly));
+            if (!Preferences.Default.LoadDeepFolderSinger) {
+                return;
+            }
             var directories = Directory.EnumerateDirectories(path, "*", SearchOption.TopDirectoryOnly);
             foreach (var directory in directories) {
                 SearchPluginInternal(directory, result);

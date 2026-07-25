@@ -441,7 +441,11 @@ namespace OpenUtau.App.ViewModels {
                 return string.Empty;
             }
 
-            var resampler = ToolsManager.Inst.GetResampler(Renderers.CLASSIC);
+            // Filter by the track's own resampler. Passing the renderer name here would
+            // never match a resampler and would silently fall back to Worldline, hiding
+            // flags that the user's actual resampler supports.
+            var resampler = track.RendererSettings.Resampler
+                ?? ToolsManager.Inst.GetResampler(track.RendererSettings.resampler);
             var flags = phoneme.GetResamplerFlags(DocManager.Inst.Project, track)
                 .Where(flag => flag.Item3 != null && resampler.SupportsFlag(flag.Item3));
             var builder = new StringBuilder();
@@ -818,43 +822,43 @@ namespace OpenUtau.App.ViewModels {
 
                 var track = DocManager.Inst.Project.tracks[Part.trackNo];
                 DocManager.Inst.StartUndoGroup("command.property.edit");
-                track.GetSupportedExps(DocManager.Inst.Project)
-                    .Where(d => d.isFlag && d.type == UExpressionType.Numerical)
-                    .ForEach(descriptor => {
-                        if (dict.TryGetValue(descriptor.flag, out float value)) {
-                            dict.Remove(descriptor.flag);
-                            if (value != descriptor.CustomDefaultValue) {
-                                value = float.Clamp(value, descriptor.min, descriptor.max);
-                                DocManager.Inst.ExecuteCmd(new SetNotesSameExpressionCommand(DocManager.Inst.Project, track, Part, selectedNotes, descriptor.abbr, value));
-                            } else {
-                                DocManager.Inst.ExecuteCmd(new SetNotesSameExpressionCommand(DocManager.Inst.Project, track, Part, selectedNotes, descriptor.abbr, null));
-                            }
+                var numericalFlags = track.GetSupportedExps(DocManager.Inst.Project)
+                    .Where(d => d.isFlag && d.type == UExpressionType.Numerical);
+                foreach (var descriptor in numericalFlags) {
+                    if (dict.TryGetValue(descriptor.flag, out float value)) {
+                        dict.Remove(descriptor.flag);
+                        if (value != descriptor.CustomDefaultValue) {
+                            value = float.Clamp(value, descriptor.min, descriptor.max);
+                            DocManager.Inst.ExecuteCmd(new SetNotesSameExpressionCommand(DocManager.Inst.Project, track, Part, selectedNotes, descriptor.abbr, value));
                         } else {
                             DocManager.Inst.ExecuteCmd(new SetNotesSameExpressionCommand(DocManager.Inst.Project, track, Part, selectedNotes, descriptor.abbr, null));
                         }
-                });
-                track.GetSupportedExps(DocManager.Inst.Project)
-                    .Where(d => d.isFlag && d.type == UExpressionType.Options)
-                    .ForEach(descriptor => {
-                        bool find = false;
-                        for (int i = 0; i < descriptor.options.Length; i++) {
-                            string option = descriptor.options[i];
-                            var flag = dict.FirstOrDefault(flag => option == $"{flag.Key}{flag.Value}" || option == $"{flag.Key}");
-                            if (!string.IsNullOrEmpty(flag.Key)) {
-                                dict.Remove(flag.Key);
-                                find = true;
-                                if (i != descriptor.CustomDefaultValue) {
-                                    DocManager.Inst.ExecuteCmd(new SetNotesSameExpressionCommand(DocManager.Inst.Project, track, Part, selectedNotes, descriptor.abbr, i));
-                                } else {
-                                    DocManager.Inst.ExecuteCmd(new SetNotesSameExpressionCommand(DocManager.Inst.Project, track, Part, selectedNotes, descriptor.abbr, null));
-                                }
-                                break;
+                    } else {
+                        DocManager.Inst.ExecuteCmd(new SetNotesSameExpressionCommand(DocManager.Inst.Project, track, Part, selectedNotes, descriptor.abbr, null));
+                    }
+                }
+                var optionFlags = track.GetSupportedExps(DocManager.Inst.Project)
+                    .Where(d => d.isFlag && d.type == UExpressionType.Options);
+                foreach (var descriptor in optionFlags) {
+                    bool find = false;
+                    for (int i = 0; i < descriptor.options.Length; i++) {
+                        string option = descriptor.options[i];
+                        var flag = dict.FirstOrDefault(flag => option == $"{flag.Key}{flag.Value}" || option == $"{flag.Key}");
+                        if (!string.IsNullOrEmpty(flag.Key)) {
+                            dict.Remove(flag.Key);
+                            find = true;
+                            if (i != descriptor.CustomDefaultValue) {
+                                DocManager.Inst.ExecuteCmd(new SetNotesSameExpressionCommand(DocManager.Inst.Project, track, Part, selectedNotes, descriptor.abbr, i));
+                            } else {
+                                DocManager.Inst.ExecuteCmd(new SetNotesSameExpressionCommand(DocManager.Inst.Project, track, Part, selectedNotes, descriptor.abbr, null));
                             }
+                            break;
                         }
-                        if (!find) {
-                            DocManager.Inst.ExecuteCmd(new SetNotesSameExpressionCommand(DocManager.Inst.Project, track, Part, selectedNotes, descriptor.abbr, null));
-                        }
-                    });
+                    }
+                    if (!find) {
+                        DocManager.Inst.ExecuteCmd(new SetNotesSameExpressionCommand(DocManager.Inst.Project, track, Part, selectedNotes, descriptor.abbr, null));
+                    }
+                }
                 if (dict.Count > 0) {
                     ThemeManager.TryGetString("errors.failed.parseflag", out string str);
                     warning = string.Format(str, string.Join(", ", dict.Keys));

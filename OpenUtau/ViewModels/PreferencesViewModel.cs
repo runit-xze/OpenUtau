@@ -69,7 +69,7 @@ namespace OpenUtau.App.ViewModels {
         [Reactive] public string OnnxRunner { get; set; }
         public List<GpuInfo> OnnxGpuOptions { get; set; }
         [Reactive] public GpuInfo OnnxGpu { get; set; }
-        public bool ShowOnnxGpu => OnnxRunner == "DirectML";
+        public bool ShowOnnxGpu => OnnxRunner == "DirectML" || OnnxRunner == "CUDA";
 
         // Appearance
         [Reactive] public string ThemeName { get; set; }

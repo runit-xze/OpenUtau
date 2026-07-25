@@ -1,134 +1,134 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 
 namespace OpenUtau.App.Views {
-    public partial class LoadingWindow : Window {
-        private static LoadingWindow? loadingDialog;
-        private static bool isCurrentlyLoading = false;
-        private static CancellationTokenSource? globalLoadingCancellationTokenSource;
+	public partial class LoadingWindow : Window {
+		private static LoadingWindow? loadingDialog;
+		private static bool isCurrentlyLoading = false;
+		private static CancellationTokenSource? globalLoadingCancellationTokenSource;
 
-        // Used to schedule tasks on the UI thread
-        public static TaskFactory uiTaskFactory = new TaskFactory(CancellationToken.None,
-            TaskCreationOptions.DenyChildAttach,
-            TaskContinuationOptions.DenyChildAttach | TaskContinuationOptions.ExecuteSynchronously,
-            TaskScheduler.FromCurrentSynchronizationContext()
-        );
+		// Used to schedule tasks on the UI thread
+		public static TaskFactory uiTaskFactory = new TaskFactory(CancellationToken.None,
+			TaskCreationOptions.DenyChildAttach,
+			TaskContinuationOptions.DenyChildAttach | TaskContinuationOptions.ExecuteSynchronously,
+			TaskScheduler.FromCurrentSynchronizationContext()
+		);
 
-        public LoadingWindow() {
-            InitializeComponent();
-        }
+		public LoadingWindow() {
+			InitializeComponent();
+		}
 
-        public static void InitializeLoadingWindow() {
-            loadingDialog = new LoadingWindow() {
-                Title = "Loading"
-            };
-            loadingDialog.Text.Text = "Loading...";
-        }
+		public static void InitializeLoadingWindow() {
+			loadingDialog = new LoadingWindow() {
+				Title = "Loading"
+			};
+			loadingDialog.Text.Text = "Loading...";
+		}
 
-        private static void ShowLoadingWindow(Window parent) {
-            if (!isCurrentlyLoading) {
-                return;
-            }
+		private static void ShowLoadingWindow(Window parent) {
+			if (!isCurrentlyLoading) {
+				return;
+			}
 
-            if (loadingDialog == null) {
-                InitializeLoadingWindow();
-            }
-            
-            loadingDialog?.ShowDialog(parent);
-        }
+			if (loadingDialog == null) {
+				InitializeLoadingWindow();
+			}
 
-        private static void CloseLoadingWindow() {
-            if (loadingDialog != null) {
-                loadingDialog.Close();
+			loadingDialog?.ShowDialog(parent);
+		}
 
-                //Recreate loading dialog to make sure it is initialized before being shown
-                loadingDialog = null;
-                InitializeLoadingWindow();
-            }
-        }
+		private static void CloseLoadingWindow() {
+			if (loadingDialog != null) {
+				loadingDialog.Close();
 
-        public static bool IsLoading() {
-            return isCurrentlyLoading;
-        }
+				//Recreate loading dialog to make sure it is initialized before being shown
+				loadingDialog = null;
+				InitializeLoadingWindow();
+			}
+		}
 
-        /// <summary>
-        /// Returns a task that shows a loading popup for a task after a time delay (Default 250ms)
-        /// </summary>
-        public static async Task LoadForAsyncTask(Task loadingTask, Window parentWindow, int timeBeforeLoadingPopup = 250) {
-            CancellationTokenSource cts = new CancellationTokenSource();
-            Task loadingPopupTask = ShowLoadingAfterTime(cts.Token, parentWindow, 1);
+		public static bool IsLoading() {
+			return isCurrentlyLoading;
+		}
 
-            await loadingTask;
+		/// <summary>
+		/// Returns a task that shows a loading popup for a task after a time delay (Default 250ms)
+		/// </summary>
+		public static async Task LoadForAsyncTask(Task loadingTask, Window parentWindow, int timeBeforeLoadingPopup = 250) {
+			CancellationTokenSource cts = new CancellationTokenSource();
+			Task loadingPopupTask = ShowLoadingAfterTime(cts.Token, parentWindow, 1);
 
-            // Cancel loading box creation task early once window successfully created
-            cts.Cancel();
-            // Close loading box if opened
-            CloseLoadingWindow();
-            isCurrentlyLoading = false;
-        }
+			await loadingTask;
 
-        /// <summary>
-        /// Returns a task that shows a loading popup for a task after a time delay (Default 250ms)
-        /// </summary>
-        public static async Task<T> LoadForAsyncTask<T>(Task<T> loadingTask, Window parentWindow, int timeBeforeLoadingPopup = 250) {
-            CancellationTokenSource cts = new CancellationTokenSource();
-            Task loadingPopupTask = ShowLoadingAfterTime(cts.Token, parentWindow, 1);
+			// Cancel loading box creation task early once window successfully created
+			cts.Cancel();
+			// Close loading box if opened
+			CloseLoadingWindow();
+			isCurrentlyLoading = false;
+		}
 
-            await loadingTask;
+		/// <summary>
+		/// Returns a task that shows a loading popup for a task after a time delay (Default 250ms)
+		/// </summary>
+		public static async Task<T> LoadForAsyncTask<T>(Task<T> loadingTask, Window parentWindow, int timeBeforeLoadingPopup = 250) {
+			CancellationTokenSource cts = new CancellationTokenSource();
+			Task loadingPopupTask = ShowLoadingAfterTime(cts.Token, parentWindow, 1);
 
-            // Cancel loading box creation task early once window successfully created
-            cts.Cancel();
-            // Close loading box if opened
-            CloseLoadingWindow();
-            isCurrentlyLoading = false;
+			await loadingTask;
 
-            return loadingTask.Result;
-        }
+			// Cancel loading box creation task early once window successfully created
+			cts.Cancel();
+			// Close loading box if opened
+			CloseLoadingWindow();
+			isCurrentlyLoading = false;
 
-        private static async Task ShowLoadingAfterTime(CancellationToken ct, Window parentWindow, int milisDelay) {
-            // Must have at least 1ms of delay opening loading window to avoid strange race conditions with UI thread (?)
-            await Task.Delay(Math.Max(milisDelay, 1), ct);
+			return loadingTask.Result;
+		}
 
-            if (ct.IsCancellationRequested) {
-                return;
-            }
+		private static async Task ShowLoadingAfterTime(CancellationToken ct, Window parentWindow, int milisDelay) {
+			// Must have at least 1ms of delay opening loading window to avoid strange race conditions with UI thread (?)
+			await Task.Delay(Math.Max(milisDelay, 1), ct);
 
-            await uiTaskFactory.StartNew(() => ShowLoadingWindow(parentWindow));
-        }
+			if (ct.IsCancellationRequested) {
+				return;
+			}
 
-        public static Task RunAsyncOnUIThread(Action func) {
-            return uiTaskFactory.StartNew(func);
-        }
+			await uiTaskFactory.StartNew(() => ShowLoadingWindow(parentWindow));
+		}
 
-        public static void BeginLoadingImmediate(Window parentWindow) {
-            BeginLoading(parentWindow, 0);
-        }
+		public static Task RunAsyncOnUIThread(Action func) {
+			return uiTaskFactory.StartNew(func);
+		}
 
-        public static void BeginLoading(Window parentWindow, int milisDelay = 250) {
-            if (isCurrentlyLoading) {
-                return;
-            }
+		public static void BeginLoadingImmediate(Window parentWindow) {
+			BeginLoading(parentWindow, 0);
+		}
 
-            isCurrentlyLoading = true;
-            if (milisDelay == 0) {
-                ShowLoadingWindow(parentWindow);
-                return;
-            }
+		public static void BeginLoading(Window parentWindow, int milisDelay = 250) {
+			if (isCurrentlyLoading) {
+				return;
+			}
 
-            globalLoadingCancellationTokenSource = new CancellationTokenSource();
-            Task.Run(() => ShowLoadingAfterTime(globalLoadingCancellationTokenSource.Token, parentWindow, milisDelay), globalLoadingCancellationTokenSource.Token);
-        }
+			isCurrentlyLoading = true;
+			if (milisDelay == 0) {
+				ShowLoadingWindow(parentWindow);
+				return;
+			}
 
-        public static void EndLoading() {
-            if (!isCurrentlyLoading) {
-                return;
-            }
-            isCurrentlyLoading = false;
+			globalLoadingCancellationTokenSource = new CancellationTokenSource();
+			Task.Run(() => ShowLoadingAfterTime(globalLoadingCancellationTokenSource.Token, parentWindow, milisDelay), globalLoadingCancellationTokenSource.Token);
+		}
 
-            globalLoadingCancellationTokenSource?.Cancel();
-            CloseLoadingWindow();
-        }
-    }
+		public static void EndLoading() {
+			if (!isCurrentlyLoading) {
+				return;
+			}
+			isCurrentlyLoading = false;
+
+			globalLoadingCancellationTokenSource?.Cancel();
+			CloseLoadingWindow();
+		}
+	}
 }

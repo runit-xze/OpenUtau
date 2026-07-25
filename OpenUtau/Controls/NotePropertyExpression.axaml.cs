@@ -1,4 +1,4 @@
-﻿using Avalonia.Controls;
+using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
@@ -7,97 +7,97 @@ using OpenUtau.Core;
 using Serilog;
 
 namespace OpenUtau.App.Controls {
-    public partial class NotePropertyExpression : UserControl {
+	public partial class NotePropertyExpression : UserControl {
 
-        public NotePropertyExpression() {
-            InitializeComponent();
-            
-            slider.AddHandler(PointerPressedEvent, SliderPointerPressed, RoutingStrategies.Tunnel);
-            slider.AddHandler(PointerReleasedEvent, SliderPointerReleased, RoutingStrategies.Tunnel);
-            slider.AddHandler(PointerMovedEvent, SliderPointerMoved, RoutingStrategies.Tunnel);
-            comboBox.AddHandler(PointerPressedEvent, OnComboBoxPointerPressed, RoutingStrategies.Tunnel);
-        }
+		public NotePropertyExpression() {
+			InitializeComponent();
 
-        // textbox
-        private string textBoxValue = string.Empty;
-        void OnTextBoxGotFocus(object? sender, GotFocusEventArgs args) {
-            Log.Debug("Note property textbox got focus");
-            if (sender is TextBox textBox) {
-                textBoxValue = textBox.Text ?? string.Empty;
-            }
-        }
-        void OnTextBoxLostFocus(object? sender, RoutedEventArgs args) {
-            Log.Debug("Note property textbox lost focus");
-            if (sender is TextBox textBox && textBoxValue != textBox.Text) {
-                SetNumericalExpressions(textBox.Text);
-            }
-        }
-        void OnFlagBoxLostFocus(object? sender, RoutedEventArgs args) {
-            Log.Debug("Note property textbox lost focus");
-            if (sender is TextBox textBox && textBoxValue != textBox.Text) {
-                if (DataContext is NotePropertyExpViewModel viewModel) {
-                    NotePropertiesViewModel.PanelControlPressed = true;
-                    viewModel.SetFlagFromText(textBox.Text);
-                    NotePropertiesViewModel.PanelControlPressed = false;
+			slider.AddHandler(PointerPressedEvent, SliderPointerPressed, RoutingStrategies.Tunnel);
+			slider.AddHandler(PointerReleasedEvent, SliderPointerReleased, RoutingStrategies.Tunnel);
+			slider.AddHandler(PointerMovedEvent, SliderPointerMoved, RoutingStrategies.Tunnel);
+			comboBox.AddHandler(PointerPressedEvent, OnComboBoxPointerPressed, RoutingStrategies.Tunnel);
+		}
 
-                    if (!string.IsNullOrEmpty(viewModel.Warning)) {
-                        var scrollViewer = this.FindAncestorOfType<ScrollViewer>();
-                        if (scrollViewer != null) {
-                            scrollViewer.ScrollToEnd();
-                        }
-                    }
-                }
-            }
-        }
+		// textbox
+		private string textBoxValue = string.Empty;
+		void OnTextBoxGotFocus(object? sender, GotFocusEventArgs args) {
+			Log.Debug("Note property textbox got focus");
+			if (sender is TextBox textBox) {
+				textBoxValue = textBox.Text ?? string.Empty;
+			}
+		}
+		void OnTextBoxLostFocus(object? sender, RoutedEventArgs args) {
+			Log.Debug("Note property textbox lost focus");
+			if (sender is TextBox textBox && textBoxValue != textBox.Text) {
+				SetNumericalExpressions(textBox.Text);
+			}
+		}
+		void OnFlagBoxLostFocus(object? sender, RoutedEventArgs args) {
+			Log.Debug("Note property textbox lost focus");
+			if (sender is TextBox textBox && textBoxValue != textBox.Text) {
+				if (DataContext is NotePropertyExpViewModel viewModel) {
+					NotePropertiesViewModel.PanelControlPressed = true;
+					viewModel.SetFlagFromText(textBox.Text);
+					NotePropertiesViewModel.PanelControlPressed = false;
 
-        // slider
-        void SliderPointerPressed(object? sender, PointerPressedEventArgs args) {
-            Log.Debug("Note property slider pressed");
-            if (sender is Control control) {
-                var point = args.GetCurrentPoint(control);
-                if (point.Properties.IsLeftButtonPressed) {
-                    DocManager.Inst.StartUndoGroup("command.property.edit");
-                    NotePropertiesViewModel.PanelControlPressed = true;
-                } else if (point.Properties.IsRightButtonPressed) {
-                    SetNumericalExpressions(null);
-                }
-            }
-        }
-        void SliderPointerReleased(object? sender, PointerReleasedEventArgs args) {
-            Log.Debug("Note property slider released");
-            if (NotePropertiesViewModel.PanelControlPressed) {
-                if (sender is Slider slider && DataContext is NotePropertyExpViewModel ViewModel) {
-                    ViewModel.SetNumericalExpressions((float)slider.Value);
-                }
-                NotePropertiesViewModel.PanelControlPressed = false;
-                DocManager.Inst.EndUndoGroup();
-            }
-        }
-        void SliderPointerMoved(object? sender, PointerEventArgs args) {
-            if (sender is Slider slider && DataContext is NotePropertyExpViewModel ViewModel) {
-                ViewModel.SetNumericalExpressions((float)slider.Value);
-            }
-        }
+					if (!string.IsNullOrEmpty(viewModel.Warning)) {
+						var scrollViewer = this.FindAncestorOfType<ScrollViewer>();
+						if (scrollViewer != null) {
+							scrollViewer.ScrollToEnd();
+						}
+					}
+				}
+			}
+		}
 
-        void OnComboBoxPointerPressed(object? sender, PointerPressedEventArgs args) {
-            Log.Debug("Note property textbox pressed");
-            if (sender is ComboBox comboBox) {
-                var point = args.GetCurrentPoint(comboBox);
-                if (point.Properties.IsRightButtonPressed) {
-                    SetNumericalExpressions(null);
-                    args.Handled = true;
-                }
-            }
-        }
+		// slider
+		void SliderPointerPressed(object? sender, PointerPressedEventArgs args) {
+			Log.Debug("Note property slider pressed");
+			if (sender is Control control) {
+				var point = args.GetCurrentPoint(control);
+				if (point.Properties.IsLeftButtonPressed) {
+					DocManager.Inst.StartUndoGroup("command.property.edit");
+					NotePropertiesViewModel.PanelControlPressed = true;
+				} else if (point.Properties.IsRightButtonPressed) {
+					SetNumericalExpressions(null);
+				}
+			}
+		}
+		void SliderPointerReleased(object? sender, PointerReleasedEventArgs args) {
+			Log.Debug("Note property slider released");
+			if (NotePropertiesViewModel.PanelControlPressed) {
+				if (sender is Slider slider && DataContext is NotePropertyExpViewModel ViewModel) {
+					ViewModel.SetNumericalExpressions((float)slider.Value);
+				}
+				NotePropertiesViewModel.PanelControlPressed = false;
+				DocManager.Inst.EndUndoGroup();
+			}
+		}
+		void SliderPointerMoved(object? sender, PointerEventArgs args) {
+			if (sender is Slider slider && DataContext is NotePropertyExpViewModel ViewModel) {
+				ViewModel.SetNumericalExpressions((float)slider.Value);
+			}
+		}
 
-        private void SetNumericalExpressions(string? expression) {
-            if (DataContext is NotePropertyExpViewModel viewModel) {
-                DocManager.Inst.StartUndoGroup("command.property.edit");
-                NotePropertiesViewModel.PanelControlPressed = true;
-                viewModel.SetNumericalExpressions(expression);
-                NotePropertiesViewModel.PanelControlPressed = false;
-                DocManager.Inst.EndUndoGroup();
-            }
-        }
-    }
+		void OnComboBoxPointerPressed(object? sender, PointerPressedEventArgs args) {
+			Log.Debug("Note property textbox pressed");
+			if (sender is ComboBox comboBox) {
+				var point = args.GetCurrentPoint(comboBox);
+				if (point.Properties.IsRightButtonPressed) {
+					SetNumericalExpressions(null);
+					args.Handled = true;
+				}
+			}
+		}
+
+		private void SetNumericalExpressions(string? expression) {
+			if (DataContext is NotePropertyExpViewModel viewModel) {
+				DocManager.Inst.StartUndoGroup("command.property.edit");
+				NotePropertiesViewModel.PanelControlPressed = true;
+				viewModel.SetNumericalExpressions(expression);
+				NotePropertiesViewModel.PanelControlPressed = false;
+				DocManager.Inst.EndUndoGroup();
+			}
+		}
+	}
 }

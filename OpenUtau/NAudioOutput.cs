@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using NAudio.Wave;
@@ -13,7 +13,7 @@ using Serilog;
 
 namespace OpenUtau.App {
 #if !WINDOWS
-    public class NAudioOutput : DummyAudioOutput { }
+	public class NAudioOutput : DummyAudioOutput { }
 #else
     public class NAudioOutput : IAudioOutput {
         const int Channels = 2;

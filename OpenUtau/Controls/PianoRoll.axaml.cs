@@ -21,7 +21,6 @@ using OpenUtau.Core.Util;
 using OpenUtau.ViewModels;
 using ReactiveUI;
 using Serilog;
-using Avalonia.Threading;
 
 namespace OpenUtau.App.Controls {
     interface IValueTip {

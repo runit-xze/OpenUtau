@@ -10,16 +10,16 @@ namespace OpenUtau.Core.Render {
 			public Node next;
 		}
 
-		private readonly int capacity;
-		private int size;
+		private readonly long maxBytes;
+		private long usedBytes;
 		private readonly Node dummyHead;
 		private readonly Node dummyTail;
 		private readonly Dictionary<uint, Node> dict;
 		private readonly object lockObj = new object();
 
-		public RenderCache(int capacity) {
-			this.capacity = capacity;
-			size = 0;
+		public RenderCache(long maxBytes) {
+			this.maxBytes = maxBytes;
+			usedBytes = 0;
 			dummyHead = new Node();
 			dummyTail = new Node();
 			dummyHead.next = dummyTail;
@@ -41,14 +41,17 @@ namespace OpenUtau.Core.Render {
 		public void Put(uint hash, byte[] data) {
 			lock (lockObj) {
 				if (dict.TryGetValue(hash, out Node node)) {
+					usedBytes -= node.data.Length;
 					node.data = data;
+					usedBytes += data.Length;
 					Remove(node);
 					AddToLast(node);
 				} else {
-					while (size >= capacity) {
-						dict.Remove(dummyHead.next.hash);
-						Remove(dummyHead.next);
-						--size;
+					while (usedBytes + data.Length > maxBytes && dict.Count > 0) {
+						Node evict = dummyHead.next;
+						usedBytes -= evict.data.Length;
+						dict.Remove(evict.hash);
+						Remove(evict);
 					}
 					Node newNode = new Node {
 						hash = hash,
@@ -56,13 +59,13 @@ namespace OpenUtau.Core.Render {
 					};
 					dict.Add(hash, newNode);
 					AddToLast(newNode);
-					++size;
+					usedBytes += data.Length;
 				}
 			}
 		}
 
 		public void Clear() {
-			size = 0;
+			usedBytes = 0;
 			dummyHead.next = dummyTail;
 			dummyTail.prev = dummyHead;
 			dict.Clear();

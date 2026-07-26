@@ -232,6 +232,8 @@ namespace OpenUtau.Core {
 					playPosTick = 0;
 					rangeStartTick = 0;
 					rangeEndTick = 0;
+					PlaybackManager.Inst.LiveWaveformCache.Clear();
+					SingerManager.Inst.ReleaseSingersNotInUse(Project);
 				} else if (cmd is SetPlayPosTickNotification setPlayPosTickNotif) {
 					playPosTick = setPlayPosTickNotif.playPosTick;
 				} else if (cmd is SetRangeSelectionNotification setRange) {
@@ -239,6 +241,7 @@ namespace OpenUtau.Core {
 					rangeEndTick = setRange.endTick;
 				} else if (cmd is SingersChangedNotification) {
 					SingerManager.Inst.SearchAllSingers();
+					SingerManager.Inst.ReleaseSingersNotInUse(Project);
 				} else if (cmd is ValidateProjectNotification) {
 					Project.ValidateFull();
 				} else if (cmd is SingersRefreshedNotification || cmd is OtoChangedNotification) {

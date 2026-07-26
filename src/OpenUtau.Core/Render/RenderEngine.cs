@@ -52,6 +52,8 @@ namespace OpenUtau.Core.Render {
 
 		static readonly System.Collections.Concurrent.ConcurrentDictionary<string, float[]> XsyBlendCache =
 			new System.Collections.Concurrent.ConcurrentDictionary<string, float[]>();
+		static long xsyBlendCacheBytes = 0;
+		const long xsyBlendCacheMaxBytes = 256L * 1024 * 1024; // 256 MB
 
 		public RenderEngine(
 			UProject project,
@@ -339,9 +341,12 @@ namespace OpenUtau.Core.Render {
 							}
 						}
 						blended = CrossSynthDSP.StftBlend(samplesA, samplesB, frameRatios);
-						if (XsyBlendCache.Count > 1024) {
+						long entryBytes = blended.Length * 4;
+						if (Interlocked.Read(ref xsyBlendCacheBytes) + entryBytes > xsyBlendCacheMaxBytes) {
+							Interlocked.Exchange(ref xsyBlendCacheBytes, 0);
 							XsyBlendCache.Clear();
 						}
+						Interlocked.Add(ref xsyBlendCacheBytes, entryBytes);
 						XsyBlendCache[xsyKey] = blended;
 					}
 					source.SetSamples(blended);

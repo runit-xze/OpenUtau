@@ -42,13 +42,14 @@ namespace OpenUtau.Core.Render {
 
 		public static List<string> getRendererOptions() {
 			return new List<string> {
-				"WORLDLINE-R",
-				"Classic"
+				WORLDLINE_R,
+				CLASSIC
 			};
 		}
 
 		public static string GetDefaultRenderer(USingerType singerType) {
-			if (Preferences.Default.DefaultRenderer == "Classic" && singerType == USingerType.Classic) {
+			if (string.Equals(Preferences.Default.DefaultRenderer, CLASSIC, StringComparison.OrdinalIgnoreCase)
+			    && singerType == USingerType.Classic) {
 				return CLASSIC;
 			} else {
 				return GetSupportedRenderers(singerType)[0];

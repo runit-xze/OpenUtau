@@ -76,9 +76,20 @@ namespace OpenUtau.Core.Render {
 		// voicevox & enunu args
 		public readonly int toneShift;
 
-		public readonly UOto oto;
+		public UOto oto;
 		public readonly UOto oto2;
-		public readonly ulong hash;
+		public ulong hash;
+		internal const ulong Oto2KeyMask = 0x5858585858585858;
+
+		internal void SwitchToOto2() {
+			oto = oto2;
+			hash ^= Oto2KeyMask;
+		}
+
+		internal void RestoreOto(UOto originalOto, ulong originalHash) {
+			oto = originalOto;
+			hash = originalHash;
+		}
 
 		internal RenderPhone(UProject project, UTrack track, UVoicePart part, UNote note, UPhoneme phoneme, int phrasePosition) {
 			position = part.position + phoneme.position - phrasePosition;
@@ -202,7 +213,7 @@ namespace OpenUtau.Core.Render {
 		public readonly float[] xsy;
 		public readonly Tuple<string, float[]>[] curves;//custom curves defined by renderer
 		public readonly ulong preEffectHash;
-		public readonly ulong hash;
+		public ulong hash;
 
 		internal readonly IRenderer renderer;
 		public readonly string wavtool;

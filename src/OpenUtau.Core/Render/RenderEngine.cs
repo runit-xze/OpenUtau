@@ -293,31 +293,25 @@ namespace OpenUtau.Core.Render {
 						}
 						float[] samplesA = taskA.Result.samples;
 
-						var otoField = typeof(RenderPhone).GetField("oto");
-						var hashField = typeof(RenderPhone).GetField("hash");
-						var phraseHashField = typeof(RenderPhrase).GetField("hash");
+						ulong originalPhraseHash = phrase.hash;
 						var originalOtos = phrase.phones.Select(p => p.oto).ToArray();
 						var originalHashes = phrase.phones.Select(p => p.hash).ToArray();
-						ulong originalPhraseHash = phrase.hash;
 						float[] samplesB;
 						try {
-							for (int i = 0; i < phrase.phones.Length; i++) {
-								var phone = phrase.phones[i];
+							foreach (var phone in phrase.phones) {
 								if (phone.oto2 != null) {
-									otoField.SetValue(phone, phone.oto2);
-									hashField.SetValue(phone, phone.hash ^ 0x5858585858585858);
+									phone.SwitchToOto2();
 								}
 							}
-							phraseHashField.SetValue(phrase, phrase.hash ^ 0x5858585858585858);
+							phrase.hash ^= RenderPhone.Oto2KeyMask;
 							var taskB = phrase.renderer.Render(phrase, progress, request.trackNo, cancellation, true);
 							taskB.Wait();
 							samplesB = taskB.Result.samples;
 						} finally {
 							for (int i = 0; i < phrase.phones.Length; i++) {
-								otoField.SetValue(phrase.phones[i], originalOtos[i]);
-								hashField.SetValue(phrase.phones[i], originalHashes[i]);
+								phrase.phones[i].RestoreOto(originalOtos[i], originalHashes[i]);
 							}
-							phraseHashField.SetValue(phrase, originalPhraseHash);
+							phrase.hash = originalPhraseHash;
 						}
 						if (cancellation.IsCancellationRequested) {
 							break;

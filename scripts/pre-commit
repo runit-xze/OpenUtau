@@ -12,7 +12,10 @@ if git diff --cached --name-only --diff-filter=ACM | grep -E '\.(cs|csproj|axaml
 	exit 1
 fi
 
-dotnet format --verify-no-changes --verbosity quiet 2>/dev/null || {
+dotnet format src/OpenUtau.Core/OpenUtau.Core.csproj --verify-no-changes --verbosity quiet 2>/dev/null
+dotnet format src/OpenUtau.Plugin.Builtin/OpenUtau.Plugin.Builtin.csproj --verify-no-changes --verbosity quiet 2>/dev/null
+dotnet format src/OpenUtau/OpenUtau.csproj --verify-no-changes --verbosity quiet 2>/dev/null
+dotnet format tests/OpenUtau.Test/OpenUtau.Test.csproj --verify-no-changes --verbosity quiet 2>/dev/null || {
 	echo "ERROR: Code style violations detected. Run 'dotnet format' and re-stage." >&2
 	exit 1
 }

@@ -24,7 +24,7 @@ install -m 755 "$APPIMAGE" "$BIN_DIR/OpenUtau"
 echo "Installed AppImage → $BIN_DIR/OpenUtau"
 
 # .desktop file — tries project source first, then falls back
-DESKTOP_SRC="OpenUtau/Assets/openutau.desktop"
+DESKTOP_SRC="src/OpenUtau/Assets/OpenUtau.desktop"
 if [ -f "$DESKTOP_SRC" ]; then
 	sed "s|^Exec=.*|Exec=$BIN_DIR/OpenUtau|" "$DESKTOP_SRC" > "$APP_DIR/openutau.desktop"
 else

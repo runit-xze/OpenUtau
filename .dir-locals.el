@@ -1,0 +1,18 @@
+;;; Directory-local variables for OpenUtau.
+;;; Emacs sees these automatically when opening any file under this tree.
+((c-mode . ((c-basic-offset . 4)
+            (tab-width . 4)
+            (indent-tabs-mode . t)
+            (c-file-style . "bsd")
+            (show-trailing-whitespace . t)))
+ (csharp-mode . ((c-basic-offset . 4)
+                 (tab-width . 4)
+                 (indent-tabs-mode . t)
+                 (c-file-style . "bsd")
+                 (show-trailing-whitespace . t)))
+ (nxml-mode . ((nxml-child-indent . 4)
+               (indent-tabs-mode . t)))
+ (sh-mode . ((sh-basic-offset . 4)
+             (indent-tabs-mode . t)))
+ (makefile-mode . ((indent-tabs-mode . t)))
+ (fundamental-mode . ((tab-width . 4)))))

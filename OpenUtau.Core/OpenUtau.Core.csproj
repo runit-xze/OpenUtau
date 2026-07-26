@@ -41,8 +41,17 @@
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.23.2" />
   </ItemGroup>
-  <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">
+  <!-- The GPU (CUDA) onnxruntime ships no arm64 natives. When building with
+       -r linux-arm64 the package tries to copy win-arm64 onnxruntime.dll
+       which doesn't exist in the package, failing the build outright.
+       The RID condition works because dotnet publish sets RuntimeIdentifier. -->
+  <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true' AND
+                       !$(RuntimeIdentifier.EndsWith('arm64'))">
     <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" Version="1.23.2" />
+  </ItemGroup>
+  <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true' AND
+                       $(RuntimeIdentifier.EndsWith('arm64'))">
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.23.2" />
   </ItemGroup>
   <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' == 'true'">
     <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.23.2" />
